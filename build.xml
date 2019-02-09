@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project basedir="." default="buildClient" name="RNS-2">
+	<description>
+			Script for RNS Assignment 2
+	</description>
+
+	<!-- The "RnsReaderFactory" used for RnsInfo and as data generator for tests -->
+	<property name="RnsInfo.RnsReaderFactory" value="it.polito.dp2.RNS.Random.RnsReaderFactoryImpl" />
+
+	<!-- The "PathFinderFactory" of the solution -->
+	<property name="SolutionPathFinderFactory" value="it.polito.dp2.RNS.sol2.PathFinderFactory" />
+
+	<!-- The default test case -->
+	<property name="testcase" value="0" />
+	<!-- The default test class -->
+	<property name="test.class" value="it.polito.dp2.RNS.lab2.tests.RNSTests" />
+
+    <!-- The location of the Neo4J web service -->
+	<property name="PORT" value="7474"/>
+	<property name="URL" value="http://localhost:${PORT}/db"/>
+
+	<property name="lab2.location" location="." />
+
+	<property name="src.dir" location="${lab2.location}/src" />
+	<property name="build.dir" location="${lab2.location}/build" />
+	<property name="lib.dir" location="${lab2.location}/lib" />
+	<property name="gen.dir" location="${lab2.location}/gen-src" />
+	<property name="gen.schema.dir" location="${lab2.location}/gen-schema" />
+	
+	<property name="shared.location" location="/opt/dp2/shared"/>
+	<property name="ext.lib.dir" location="${shared.location}/lib" />
+	
+	<property name="debug" value="true" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.8" />
+	<property name="source" value="1.8" />
+	
+	<!-- The classpath to be used for compilation of the solution -->
+	<path id="sol.classpath">
+		<pathelement location="${lib.dir}/RNS.jar"/>
+		<pathelement location="${lib.dir}/lab2.jar"/>
+		<fileset dir="${ext.lib.dir}">
+		    <include name="*.jar" />
+			<exclude name="ant-*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- The classpath that includes only the RNS.jar -->
+	<path id="RNS.classpath">
+		<pathelement location="${lib.dir}/RNS.jar"/>
+	</path>
+		
+	<!-- Ant Script for controlling Neo4j-->
+	<import file="neo4j-build.xml"/>
+	
+	<!-- The classpath to be used for running the tests -->
+	<path id="test.classpath">
+		<pathelement location="${build.dir}" />
+		<fileset dir="${lib.dir}">
+		    <include name="*.jar" />
+		</fileset>
+		<fileset dir="${ext.lib.dir}">
+		    <include name="*.jar" />
+			<exclude name="ant-*.jar"/>
+		</fileset>
+	</path>
+	
+	<!-- Target setseed	-->
+	<target name="setseed" unless="seed">
+		<tstamp>
+			<format property="seed" pattern="1HHmmss" />
+		</tstamp>
+	</target>
+	
+	<!-- Target init	-->
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${gen.dir}" />
+		<mkdir dir="${gen.schema.dir}" />
+	</target>
+	
+	<!-- The target for compiling the RnsInfo application -->
+	<target name="buildRnsInfo" depends="init">
+		<echo>Building RnsInfo (if needed)...</echo>
+		<javac 
+			destdir="${build.dir}"
+			debug="${debug}"
+			debuglevel="${debuglevel}"
+			source="${source}"
+			target="${target}"
+			includeantruntime="false">
+				<src path="${src.dir}" />
+				<include name="it/polito/dp2/RNS/lab1/RnsInfo.java" />
+				<classpath>
+					<path refid="RNS.classpath" />
+				</classpath>
+		</javac>
+		<echo>Done.</echo>
+	</target>
+
+	<!-- The target for running the RnsInfo application -->
+	<target name="RnsInfo" depends="buildRnsInfo, setseed" description="Run RnsInfo">
+		<java classname="it.polito.dp2.RNS.lab1.RnsInfo" failonerror="true" fork="yes">
+			<sysproperty key="it.polito.dp2.RNS.Random.seed" value="${seed}"/>
+			<sysproperty key="it.polito.dp2.RNS.Random.testcase" value="${testcase}"/>
+			<sysproperty key="it.polito.dp2.RNS.RnsReaderFactory" value="${RnsInfo.RnsReaderFactory}"/>
+			<classpath>
+				<path refid="RNS.classpath" />
+				<pathelement location="${lib.dir}/RNSRandom.jar"/>
+				<pathelement path="${build.dir}"/>
+			</classpath>
+		</java>
+	</target>
+	
+	<!-- Target buildClient -->
+	<target name="buildClient" depends="init" description="Build your solution">
+		<echo>Building the submitted solution (if needed)...</echo>
+		<ant antfile="sol-build.xml" target="generate-artifacts"></ant>
+		<javac destdir="${build.dir}" debug="${debug}" debuglevel="${debuglevel}" source="${source}" target="${target}" includeantruntime="false">
+			<src path="${src.dir}"/>
+			<src path="${gen.dir}"/>
+			<include name="it/polito/dp2/RNS/sol2/**" />
+			<classpath>
+				<path refid="sol.classpath" />
+			</classpath>
+		</javac>
+		<echo>Done.</echo>
+	</target>
+
+	<!-- Target runFuncTest	-->
+	<target name="runFuncTest" depends="setseed" description="Run Functional tests">
+		<antcall target="runFuncTest.real">
+			<param name="test.class" value="${test.class}" />
+			<param name="exit.code" value="126" />
+		</antcall>
+	</target>
+
+	<!-- Target runTest.real	-->
+	<target name="runFuncTest.real" depends="buildClient, setseed">
+		<delete file="testout.xml" />
+		<junit printsummary="on" dir="." fork="yes" haltonfailure="no" showoutput="no" filtertrace="true" timeout="120000">
+			<jvmarg value="-Djava.awt.headless=true" />
+			<sysproperty key="it.polito.dp2.RNS.RnsReaderFactory" value="${RnsInfo.RnsReaderFactory}" />
+			<sysproperty key="it.polito.dp2.RNS.Random.testcase" value="${testcase}"/>
+			<sysproperty key="it.polito.dp2.RNS.Random.seed" value="${seed}"/>
+			<sysproperty key="it.polito.dp2.RNS.lab2.PathFinderFactory" value="${SolutionPathFinderFactory}" />
+			<sysproperty key="it.polito.dp2.RNS.lab2.URL" value="${URL}"/>
+			<formatter type="brief" usefile="false"/>
+			<formatter type="xml" usefile="true"/>
+			<formatter type="plain" usefile="false"/>
+			<test haltonfailure="no" failureproperty="test_failed" outfile="testout" name="${test.class}"/>
+			<classpath>
+				<path refid="test.classpath" />
+			</classpath>
+		</junit>
+		<fail if="test_failed" status="${exit.code}" message="*** Some Tests FAILED ***"/>
+		<echo>*** All Tests PASSED  ***</echo>
+	</target>
+
+	<!-- Target clean	-->
+	<target name="clean" description="Clean generated files and class files">
+		<delete dir="${build.dir}" />
+		<delete dir="${gen.dir}" />
+		<delete dir="${gen.schema.dir}" />
+		<delete file="testout.xml" />
+	</target>
+	
+	<!--target for building the final zip containing the solution -->
+	<target name="make-zip" description="Make zip to be submitted">
+		<zip destfile="lab2.zip"
+			basedir="${lab2.location}"
+		    includes="custom/* src/it/polito/dp2/RNS/sol2/**/*.java sol-build.xml"
+		/>
+	</target>
+
+</project>

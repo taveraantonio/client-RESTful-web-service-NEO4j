@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project basedir="." default="generate-artifacts" name="RNS-SOL2">
+	<description>
+			Script for RNS Assignment 2 solution
+	</description>
+	
+	<property name="assignment2.location" location="." />
+	<property name="gen.dir" location="${assignment2.location}/gen-src" />
+	<property name="schema.dir" location="${assignment2.location}/custom" />
+	
+	<!-- Create the gen-src directory -->
+	<target name="init">
+		<mkdir dir="${gen.dir}" />
+	</target>
+	
+	<target name="generate-artifacts" depends="init" description="Generate classes from schema">
+		<exec executable="xjc" failonerror="true">
+			<arg value="-d" />
+			<arg value="${gen.dir}" />
+			<arg value="-p" />
+			<arg value="it.polito.dp2.RNS.sol2.jaxb" />
+			<arg value="${schema.dir}/RnsSchema.xsd" />
+		</exec>
+	</target>
+
+</project>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Rns xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="RnsSchema.xsd">
+   
+   <Place id="Gate0">
+       <connectedTo>Gate1</connectedTo>
+       <connectedTo>PA001</connectedTo>
+   </Place>
+    
+    <Place id="Gate1">
+        <connectedTo>Gate0</connectedTo>
+    </Place>
+    
+    <Place id="PA001">
+        <connectedTo>Gate1</connectedTo>
+    </Place>
+    
+    <Node id="PA001"/>
+    
+    <Connection to="http://../.." type="ConnectedTo"/>
+    
+    <ShortestPath>
+   		<to>http://../..</to>
+   		<max_depth>20</max_depth>
+    	<relationships>
+    		<type>ConnectedTo</type>
+    		<direction>out</direction>
+    	</relationships>
+    	<algorithm>shortestPath</algorithm>
+    </ShortestPath>
+    
+    <ShortestResult>
+    <nodes>http://../..</nodes>
+    <nodes>http://../..</nodes>
+    </ShortestResult>
+    
+</Rns>
